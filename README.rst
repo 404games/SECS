@@ -25,16 +25,16 @@ Example:
 .. code-block:: actionscript
 
   // FILE: components/Visible.as
-  class Visible {
+  class Visible implements IComponent {
     public var mesh:Mesh;
     public var material:TextureMaterial;
     public var animator:VertexAnimator;
   }
 
   // FILE: components/Position.as
-  class Position {
-    public var x;
-    public var y;
+  class Position implements IComponent {
+    public var x:Number;
+    public var y:Number;
     
     public function setXY(x:Number, y:Number):Position {
       this.x = x;
@@ -44,7 +44,7 @@ Example:
   }
 
   // FILE: systems/RenderingSystem.as
-  class RenderingSystem {
+  class RenderingSystem implements ISystem {
     [...]
     public function RenderingSystem(sprite:Sprite, renderableList:EntityList) {
       this._renderableList = renderableList;
@@ -66,22 +66,23 @@ Example:
   // FILE: Game.as
   class Game extends Sprite {
     public function Game {
+
+      // -> entity lists first
+      var renderableList:EntityList = Engine.getList([Visible, Position]);
+
       // -> init entities
-      entity = new Entity();
+      var entity:Entity = new Entity();
       entity.addComponent(Visible).addComponentWith(new Position().setXY(50, 100));
       Engine.addEntity(entity);
-
-      // -> entity lists
-      var renderableList:EntityList = Engine.getList([Visible, Position]);
       
       // -> systems
       Engine.addSystem(
-        new RenderingSystem(this, renderableList);
-      )
-      this.addEventListener(Event.ENTER_FRAME, tick);
-    }
+        new RenderingSystem(this, renderableList)
+      );
 
-    public function tick(ms:uint):void {
-      Engine.updateSystems(ms);
+      // Tick
+      this.addEventListener(Event.ENTER_FRAME, function(e:Event):void {
+        Engine.update(60);
+      });
     }
   }

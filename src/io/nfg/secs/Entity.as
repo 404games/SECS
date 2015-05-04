@@ -1,7 +1,9 @@
 package io.nfg.secs {
   import io.nfg.secs.core.secs_internal;
+  import io.nfg.secs.core.IComponent;
   import flash.utils.Dictionary;
-  import flash.utils.getDefinitionByName;
+  //import flash.utils.getDefinitionByName;
+  //import flash.utils.getQualifiedClassName;
   
   public class Entity {
     
@@ -26,12 +28,12 @@ package io.nfg.secs {
      * @return
      */
     public function addComponent(component:Class):* {
-      return this.addComponentWith ( new component () );
+      return this.addComponentWith( new component () );
     }
     
-    public function addComponentWith(component:Object):* {
-      var componentClass:Class = Class(component.constructor);
-      this._components[componentClass] = component as Component;
+    public function addComponentWith(component:IComponent):* {
+      var componentClass:Class = Class((component as Object).constructor);
+      this._components[componentClass] = component;
       
       if ( _inEngine )
         Engine.secs_internal::updateEntity ( this );

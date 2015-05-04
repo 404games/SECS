@@ -1,4 +1,4 @@
-package io.nfg.secs.core.interfaces {
+package io.nfg.secs.core {
   
   /**
    * @author NotFoundGames

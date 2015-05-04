@@ -1,4 +1,4 @@
-package io.nfg.secs.pooling {
+package io.nfg.secs {
   
   /**
    * @author Mateusz Lesiński

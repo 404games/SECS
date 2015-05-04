@@ -1,9 +1,11 @@
 package io.nfg.secs {
-  import io.nfg.secs.core.EntityListManager;
   import io.nfg.secs.core.secs_internal;
+  import io.nfg.secs.core.ISystem;
+
   import io.nfg.secs.EntityList;
-  import io.nfg.secs.core.interfaces.ISystem;
   import flash.utils.Dictionary;
+  //import flash.utils.getQualifiedClassName;
+  //import flash.utils.getDefinitionByName;
   
   /**
    * Engine class provides an easy way to manage and update all systems
@@ -12,16 +14,32 @@ package io.nfg.secs {
   public class Engine {
     use namespace secs_internal;
     
-    private static var _lists:EntityListManager = new EntityListManager();
     private static var _systems:Dictionary = new Dictionary();
     private static var _resources:Dictionary = new Dictionary();
+    private static var _lists:Object = new Object();
     
     public function Engine() {
       throw new Error("You can't create an instance of type Engine");
     }
     
+    /**
+     *
+     * @param components
+     * @return
+     */
     static public function getList(components:Array):EntityList {
-      return Engine._lists.getList(components);
+      
+      var name:String, names:Array = [];
+      for (var i:int = 0; i < components.length; i++)
+        names.push(components[i].toString());
+      names.sort();
+      
+      name = names.join("").replace('object ', '.');
+      
+      if( Engine._lists.hasOwnProperty(name) == false || Engine._lists[name] == null)
+        Engine._lists[name] = new EntityList(components);
+
+      return Engine._lists[name];
     }
     
     /**
@@ -42,13 +60,11 @@ package io.nfg.secs {
      * Adds a new system to the engine
      * @param system
      */
-    static public function addSystem(system:Object):void {
-      var systemClass:Class = Class(system.constructor);
+    static public function addSystem(system:ISystem):void {
+      var systemClass:Class = Class((system as Object).constructor);
       if(systemClass != null) {
         if(Engine._systems[systemClass] == null) {
-          Engine._systems[systemClass] = system as ISystem;
-          //system.secs::setEntityListManager( Engine._lists );
-          //system.setup();
+          Engine._systems[systemClass] = system;
         } else {
           throw new Error('[SECS] system "' + flash.utils.getQualifiedClassName(systemClass) + " can't be added twice");
         }
@@ -92,27 +108,34 @@ package io.nfg.secs {
       entity.secs_internal::_inEngine = true;
       
       var k:String;
-      for( k in Engine._lists.secs_internal::list) {
-      if( Engine._lists.secs_internal::list[k].secs_internal::doesEntityMatch( entity ) )
-        Engine._lists.secs_internal::list[k].secs_internal::addEntity( entity );
+      var isAntisocial:Boolean = true;
+      for( k in Engine._lists) {
+        if( Engine._lists[k].secs_internal::doesEntityMatch( entity ) ) {
+          Engine._lists[k].secs_internal::addEntity( entity );
+          isAntisocial = false;
+        }
       }
+
+      if(isAntisocial)
+        throw new Error("[SECS] " + entity + " is not a part of any entityList, please init entityList with getList([Component1, Component2, ...] before adding entity to the engine");
+
     }
     
     static public function removeEntity(entity:Entity) : void {
       var k:String;
       
-      for( k in Engine._lists.secs_internal::list)
-        Engine._lists.secs_internal::list[k].secs_internal::removeEntity( entity );
+      for( k in Engine._lists)
+        Engine._lists[k].secs_internal::removeEntity( entity );
       
       entity.secs_internal::_inEngine = false;
     }
     
     static secs_internal function updateEntity( entity:Entity ) : void {
       var k:String;
-      for( k in Engine._lists.secs_internal::list ) {
-        if( entity._lists.indexOf( Engine._lists.secs_internal::list[k] ) == -1
-        && Engine._lists.secs_internal::list[k].secs_internal::doesEntityMatch( entity ) )
-          Engine._lists.secs_internal::list[k].secs_internal::addEntity( entity );
+      for( k in Engine._lists ) {
+        if( entity._lists.indexOf( Engine._lists[k] ) == -1
+        && Engine._lists[k].secs_internal::doesEntityMatch( entity ) )
+          Engine._lists[k].secs_internal::addEntity( entity );
       }
     }
   }
